@@ -15,6 +15,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
 
     def handle(self):
         self.wfile.write(b"Hemos recibido tu peticion")
+        print(self.wfile)
         for line in self.rfile:
             print("El cliente nos manda ", line.decode('utf-8'))
 
