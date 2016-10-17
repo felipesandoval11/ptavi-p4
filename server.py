@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
+# Made by Felipe Sandoval Sibada
 """
 Clase (y programa principal) para un servidor de eco en UDP simple
 """
@@ -18,7 +19,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             print("El cliente nos manda ", line.decode('utf-8'))
 
 if __name__ == "__main__":
-    serv = socketserver.UDPServer(('', 6001), EchoHandler)
+    serv = socketserver.UDPServer(('', 5060), EchoHandler)
     print("Lanzando servidor UDP de eco...")
     try:
         serv.serve_forever()
