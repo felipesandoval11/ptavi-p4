@@ -1,28 +1,27 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # Made by Felipe Sandoval Sibada
-"""
-Clase (y programa principal) para un servidor de eco en UDP simple
-"""
+"""Programa servidor UDP que abre un socket a un servidor."""
 
 import socketserver
+import sys
 
 
+# Constantes. Dirección IP del servidor y contenido a enviar
 class EchoHandler(socketserver.DatagramRequestHandler):
-    """
-    Echo server class
-    """
-
     def handle(self):
         self.wfile.write(b"Hemos recibido tu peticion")
-        print(self.wfile)
         for line in self.rfile:
+            print("IP cliente: " + str(self.client_address[0]) +
+                  " | puerto: " + str(self.client_address[1]))
             print("El cliente nos manda ", line.decode('utf-8'))
 
 if __name__ == "__main__":
-    serv = socketserver.UDPServer(('', 5060), EchoHandler)
-    print("Lanzando servidor UDP de eco...")
     try:
+        serv = socketserver.UDPServer(('', int(sys.argv[1])), EchoHandler)
+        print("Lanzando servidor UDP de eco...")
         serv.serve_forever()
+    except IndexError:
+        print("Usage: python3 server.py port")
     except KeyboardInterrupt:
         print("Finalizado servidor")
