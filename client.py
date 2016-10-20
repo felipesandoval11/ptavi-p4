@@ -23,6 +23,6 @@ if __name__ == "__main__":
               sys.argv[5], "\r\n\r\n")
         my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
         data = my_socket.recv(1024)
-        print('Recibido -- ', data.decode('utf-8'))
+        print('--', data.decode('utf-8'))
 
         print("Socket terminado.")
