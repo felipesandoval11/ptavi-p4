@@ -17,12 +17,14 @@ except IndexError:
 
 # Creamos el socket, lo configuramos y lo atamos a un servidor/puerto
 if __name__ == "__main__":
-    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
-        my_socket.connect((SERVER, PORT))
-        print(sys.argv[3] + " " + sys.argv[4], "SIP/2.0\r\n" + "Expires: " +
-              sys.argv[5], "\r\n\r\n")
-        my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
-        data = my_socket.recv(1024)
-        print('--', data.decode('utf-8'))
-
-        print("Socket terminado.")
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
+            my_socket.connect((SERVER, PORT))
+            print(sys.argv[3] + " " + sys.argv[4], "SIP/2.0\r\n" +
+                  "Expires: " + sys.argv[5], "\r\n\r\n")
+            my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
+            data = my_socket.recv(1024)
+            print('--', data.decode('utf-8'))
+            print("Socket terminado.")
+    except ConnectionRefusedError:
+        print("No es posible establecer la conexion. Servidor no encontrado.")
