@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 # Made by Felipe Sandoval Sibada
-"""Clase (y programa principal) para un servidor de eco en UDP simple"""
+"""Clase (y programa principal) para un servidor de eco en UDP-SIP."""
 
 import socketserver
 import json
@@ -13,66 +13,63 @@ import sys
 class SIPRegisterHandler(socketserver.DatagramRequestHandler):
     """Defino mi variable my_dic como atributo de clase."""
 
-    my_clients = []
+    my_dic = {}         # Diccionario de clientes para gestionar.
+    exist_file = True
 
     def json2registered(self):
+        """Metodo que inspecciona si existe un archivo .json."""
         try:
             with open("registered.json", "r") as data_file:
-                loaded = json.load(data_file)
-                loaded.append(self.my_clients)
-            return True
+                self.my_dic = json.load(data_file)
+                self.exist_file = True
         except:
-            return False
+            self.exist_file = False
 
     def register2json(self):
-        if not self.json2registered():  # Primero que escribo.
+        """Metodo con el que escribo mis clientes en archivo .json."""
+        if not self.exist_file:
             with open("registered.json", "w") as outfile:
-                json.dump(self.my_clients,  outfile, indent=4,
-                          sort_keys=True, separators=(',', ':'))
-        else:                           # Al momento de actualizar.
-            with open("registered.json", "w") as outfile:
-                json.dump(self.my_clients,  outfile, indent=4,
-                          sort_keys=True, separators=(',', ':'))
+                json.dump(self.my_dic,  outfile, indent=4, sort_keys=True,
+                          separators=(',', ':'))
+        else:
+            self.expired()
+            with open("registered.json", "r+") as outfile:
+                json.dump(self.my_dic,  outfile, indent=4, sort_keys=True,
+                          separators=(',', ':'))
 
     def handle(self):
         """Handler que se ejecuta cada vez que se reciba un mensaje."""
         found = False
-        self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
-        print("IP cliente: " + str(self.client_address[0]),
+        print("IP cliente:" + str(self.client_address[0]),
               "| puerto: " + str(self.client_address[1]), '\n')
-        for line in self.rfile:
-            line_str = str(line.decode('utf-8'))
-            sip_addr = line_str.split(' ')[1]
-            time_exp = int(line_str.split(' ')[2])
-            time_to_del = time.strftime("%Y-%m-%d %H:%M:%S",
-                                        time.gmtime(time.time() + time_exp))
-            print(line_str)
-        if line_str.split(' ')[0].isupper()\
-           and line_str.split(' ')[0] == "REGISTER":
-            my_user = [sip_addr, {"address": str(self.client_address[0]),
-                       "expires": time_to_del}]
-            if time_exp != 0:
-                for client in self.my_clients:
-                    if client[0] == my_user[0]:
-                        client[1] = my_user[1]
-                        found = True
-                if not found:
-                    self.my_clients.append(my_user)
-            else:
-                for client in self.my_clients:
-                    if client[0] == my_user[0]:
-                        self.my_clients.remove(client)
-        self.expired()
-        self.register2json()
-    
+        line_str = self.rfile.read().decode('utf-8')
+        sip_addr = line_str.split(' ')[1][4:]
+        time_exp = int(line_str.split(' ')[3])
+        time_to_del = time.strftime("%Y-%m-%d %H:%M:%S",
+                                    time.gmtime(time.time() + time_exp))
+        print(line_str)
+        if line_str.split(' ')[0].isupper() and\
+           line_str.split(' ')[0] == "REGISTER":
+            self.json2registered()
+            self.my_dic[sip_addr] = {"address": str(self.client_address[0]),
+                                     "expires": time_to_del}
+            if time_exp == 0:
+                del self.my_dic[sip_addr]
+            self.register2json()
+            self.wfile.write(b"SIP/2.0 200 OK\r\n\r\n")
+
     def expired(self):
+        """Gestiona el tiempo de expiracion de los usuarios."""
         actual_time = time.strftime("%Y-%m-%d %H:%M:%S",
                                     time.gmtime(time.time()))
-        for client in self.my_clients:
-            if client[1]["expires"] < actual_time:
-                self.my_clients.remove(client)
-        return self.my_clients
-        
+        expired_dic = []
+        for client in self.my_dic:
+            if self.my_dic[client]["expires"] < actual_time:
+                expired_dic.append(client)
+        for client in expired_dic:
+            del self.my_dic[client]
+        return self.my_dic
+
 
 if __name__ == "__main__":
     try:
