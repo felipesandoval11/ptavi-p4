@@ -20,9 +20,10 @@ if __name__ == "__main__":
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
             my_socket.connect((SERVER, PORT))
-            print(sys.argv[3] + " " + sys.argv[4], "SIP/2.0\r\n" +
-                  "Expires: " + sys.argv[5], "\r\n\r\n")
-            my_socket.send(bytes(LINE, 'utf-8') + b'\r\n')
+            sip_str = sys.argv[3] + " sip:" + sys.argv[4] +\
+                " SIP/2.0\r\n" + "Expires: " + sys.argv[5] + "\r\n"
+            print(sip_str + "\r\n")
+            my_socket.send(bytes(sip_str, 'utf-8') + b'\r\n')
             data = my_socket.recv(1024)
             print('--', data.decode('utf-8'))
             print("Socket terminado.")
